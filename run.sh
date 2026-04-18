@@ -1,12 +1,12 @@
 #!/bin/bash
-# run_multi_mine.sh - Turbo Multi-Wallet Runner by LienXin
+# run.sh - Turbo Multi-Wallet Runner by LienXin
 set -e
 
 # Cari semua folder wallet yang sudah disetup
 WALLET_DIRS=$(find "$HOME" -maxdepth 1 -name "mine-wallet-*" -type d | sort)
 
 if [ -z "$WALLET_DIRS" ]; then
-    echo "ERROR: Nggak ada folder mine-wallet-N. Jalankan 'bash setup_multi_mine.sh' dulu Bos."
+    echo "ERROR: Nggak ada folder mine-wallet-N. Jalankan 'bash setup.sh' dulu Bos."
     exit 1
 fi
 
@@ -24,14 +24,16 @@ for dir in $WALLET_DIRS; do
         source .env
     else
         export MINER_ID="mine-agent-$(basename $dir)"
+        export AWP_WALLET_ID="default"
     fi
     
     # 3. UNLOCK WALLET (Butuh Private Key tiap wallet)
-    echo ">> Sedot token untuk $MINER_ID..."
+    echo ">> Sedot token untuk $MINER_ID (Wallet: $AWP_WALLET_ID)..."
     mkdir -p "$dir/.openclaw"
     
-    # Unlock wallet and extract token
-    # Catatan: awp-wallet unlock biasanya butuh interaksi atau key dari file
+    # Unlock wallet with specific ID and extract token
+    # Important: export AWP_WALLET_ID so awp-wallet knows which profile to unlock
+    export AWP_WALLET_ID=$AWP_WALLET_ID
     awp-wallet unlock --duration 86400 \
     | python3 -c "import sys,json; print(json.load(sys.stdin)['sessionToken'])" \
     > "$dir/session.txt"
@@ -42,11 +44,7 @@ for dir in $WALLET_DIRS; do
     export MINE_SKIP_ENRICH=1
     export MINER_ID=$MINER_ID
     
-    # Ambil token dari session.txt buat start
-    TOKEN=$(cat "$dir/session.txt")
-    
     # Start dengan token spesifik biar nggak bentrok
-    # Catatan: Kita arahkan data-state ke folder masing-masing
     .venv/bin/python scripts/run_tool.py agent-start ds_wikipedia,ds_linkedin_profiles,ds_linkedin_posts,ds_linkedin_company,ds_linkedin_jobs,ds_arxiv,ds_amazon_reviews,ds_basic_amazon_products_active
     
     echo "✓ $MINER_ID Sedang jalan di background."
@@ -54,4 +52,4 @@ for dir in $WALLET_DIRS; do
 done
 
 echo "--- SEMUA WALLET SUDAH JALAN ---"
-echo "Cek status semua wallet Bos lewat: bash status_multi.sh"
+echo "Cek status semua wallet Bos lewat: bash status.sh"

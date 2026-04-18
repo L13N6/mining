@@ -1,5 +1,5 @@
 #!/bin/bash
-# status_multi.sh - Multi-Wallet Status Checker by LienXin
+# status.sh - Multi-Wallet Status Checker by LienXin
 set -e
 
 # Cari semua folder wallet
